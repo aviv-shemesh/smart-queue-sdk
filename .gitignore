@@ -1,0 +1,23 @@
+# Python
+backend/.env
+backend/venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Node
+admin-portal/node_modules/
+admin-portal/dist/
+
+# Android
+*.iml
+.gradle/
+local.properties
+.idea/
+*.apk
+*.aab
+build/
+
+# macOS
+.DS_Store
