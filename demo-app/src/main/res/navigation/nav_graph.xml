@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.smartqueue.demo.ui.home.HomeFragment"
+        android:label="Home">
+        <action
+            android:id="@+id/action_home_to_myTicket"
+            app:destination="@id/myTicketFragment" />
+        <action
+            android:id="@+id/action_home_to_queueStatus"
+            app:destination="@id/queueStatusFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/myTicketFragment"
+        android:name="com.smartqueue.demo.ui.ticket.MyTicketFragment"
+        android:label="My Ticket">
+        <argument
+            android:name="queueId"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_myTicket_to_yourTurn"
+            app:destination="@id/yourTurnFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/yourTurnFragment"
+        android:name="com.smartqueue.demo.ui.yourturn.YourTurnFragment"
+        android:label="Your Turn">
+        <argument
+            android:name="ticketNumber"
+            app:argType="integer"
+            android:defaultValue="0" />
+        <action
+            android:id="@+id/action_yourTurn_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/queueStatusFragment"
+        android:name="com.smartqueue.demo.ui.status.QueueStatusFragment"
+        android:label="Queue Status">
+        <argument
+            android:name="queueId"
+            app:argType="string" />
+    </fragment>
+
+</navigation>

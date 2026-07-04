@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="navyBackground">#0C1940</color>
+    <color name="navySurface">#162255</color>
+    <color name="navyDark">#080F28</color>
+    <color name="cyan">#29C5D6</color>
+    <color name="cyanDark">#1A9AAB</color>
+    <color name="white">#FFFFFF</color>
+    <color name="textSecondary">#8FA8C8</color>
+    <color name="errorRed">#EF5350</color>
+</resources>

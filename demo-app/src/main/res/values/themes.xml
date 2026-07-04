@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SmartQueue" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/cyan</item>
+        <item name="colorPrimaryVariant">@color/cyanDark</item>
+        <item name="colorOnPrimary">@color/navyDark</item>
+        <item name="colorSecondary">@color/cyan</item>
+        <item name="colorOnSecondary">@color/navyDark</item>
+        <item name="android:colorBackground">@color/navyBackground</item>
+        <item name="colorSurface">@color/navySurface</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/textSecondary</item>
+        <item name="android:windowBackground">@color/navyBackground</item>
+        <item name="android:statusBarColor">@color/navyDark</item>
+        <item name="android:navigationBarColor">@color/navyDark</item>
+        <item name="editTextColor">@color/white</item>
+        <item name="android:editTextColor">@color/white</item>
+    </style>
+</resources>
