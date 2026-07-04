@@ -6,6 +6,38 @@ A complete, production-ready virtual queue management system — Android SDK, Fa
 
 ---
 
+## The Problem
+
+Many businesses and organizations want to offer digital queue services to their customers, but are required to build a complete queue system from scratch. The core challenges are:
+
+| Challenge | Description |
+|-----------|-------------|
+| **Ticket issuance** | Generating unique queue numbers per customer |
+| **Position tracking** | Monitoring each customer's live place in line |
+| **Estimated wait time** | Calculating expected wait based on queue progress |
+| **Notifications** | Alerting customers when their turn is approaching |
+| **Business-side management** | Letting staff open, pause, close, and advance queues |
+
+Smart Queue SDK solves all of these with a single library and a few API calls.
+
+---
+
+## Use Cases
+
+Smart Queue SDK fits any domain that requires queue management:
+
+| Sector | Examples |
+|--------|---------|
+| Healthcare | Health clinics, pharmacies |
+| Finance | Banks, insurance offices |
+| Government | Municipalities, licensing offices |
+| Education | Universities, registration offices |
+| Retail | Shops, chains, customer service counters |
+| Food & Beverage | Restaurants, coffee shops |
+| Services | Barbershops, garages, fitness studios |
+
+---
+
 ## Overview
 
 Smart Queue lets businesses manage customer queues digitally. Customers join via a mobile app and receive real-time position updates; staff manage queues through a web portal; the system handles ticket lifecycle, analytics, and notifications automatically.
@@ -25,7 +57,11 @@ Smart Queue lets businesses manage customer queues digitally. Customers join via
 
 ## Features
 
-- **Real-time queue position** — polling-based Flow updates via `observePosition()`
+- **Join queue digitally** — customer receives a ticket number and enters the queue instantly
+- **Real-time position tracking** — polling-based Flow updates via `observePosition()`
+- **Estimated wait time** — calculated from queue progress and average service time
+- **Leave queue** — customer can cancel their ticket at any time
+- **Push notifications** — alerts when the queue is approaching or when it's the customer's turn
 - **Full ticket lifecycle** — `waiting → called → served | cancelled`
 - **Queue lifecycle** — `open | paused | closed`
 - **Per-queue analytics** — hourly waiting counts and average wait times
@@ -48,6 +84,8 @@ Smart Queue lets businesses manage customer queues digitally. Customers join via
 │   React 19 + Vite   │ ◄─────────────────     MongoDB Atlas
 └─────────────────────┘
 ```
+
+The architecture is built in clear layers to enable efficient storage, fast retrieval, and real-time queue state updates. The SDK caches queue data locally so the app stays responsive even when offline.
 
 ---
 
@@ -152,6 +190,70 @@ SmartQueueSDK.observePosition(queueId, ticketNumber)
         }
     }
 ```
+
+---
+
+## SDK Public API
+
+A developer can embed a complete queue system using only these calls:
+
+| # | Function | Description |
+|---|----------|-------------|
+| 1 | `SmartQueueSDK.init(config)` | Initialize the SDK and connect to the backend |
+| 2 | `SmartQueueSDK.joinQueue(queueId, customerName)` | Issue a queue ticket for the customer |
+| 3 | `SmartQueueSDK.leaveQueue(queueId, ticketNumber)` | Cancel the customer's place in line |
+| 4 | `SmartQueueSDK.observePosition(queueId, ticketNumber)` | Flow of live position updates |
+| 5 | `SmartQueueSDK.getTicket(queueId, ticketNumber)` | Get current ticket state and estimated wait |
+| 6 | `SmartQueueSDK.getQueueStatus(queueId)` | Get queue status and waiting count |
+
+### Internal SDK functions
+
+These run automatically inside the library:
+
+| Function | Description |
+|----------|-------------|
+| `syncWithServer()` | Sync local state with the backend |
+| `sendJoinRequest()` | Send the join request to the server |
+| `calculatePosition()` | Compute the customer's current position |
+| `calculateEstimatedWaitTime()` | Derive expected wait from position × avg service time |
+| `cacheQueueData()` | Persist queue state locally for offline resilience |
+| `handleNotifications()` | Manage incoming push notification payloads |
+| `monitorConnection()` | Detect and respond to connectivity changes |
+| `refreshQueueStatus()` | Trigger a polling cycle to refresh queue state |
+
+---
+
+## Admin Portal Capabilities
+
+The portal gives staff full control over queues:
+
+| # | Capability | Description |
+|---|------------|-------------|
+| 1 | **Create queue** | Open a new queue for customers to join |
+| 2 | **Close queue** | Stop accepting new customers |
+| 3 | **Call next** | Advance the queue to the next customer |
+| 4 | **Live waiting list** | See all waiting customers in real time |
+| 5 | **Analytics & reports** | Load charts and average wait times |
+| 6 | **Queue status control** | Open, pause, or close a queue instantly |
+| 7 | **Export CSV** | Download the current waiting list |
+| 8 | **Track average wait times** | Monitor wait times displayed in real time |
+
+---
+
+## Backend Functions
+
+The server handles all queue logic, wait-time calculation, and data production:
+
+| # | Function | Description |
+|---|----------|-------------|
+| 1 | `createQueue()` | Create a new queue in the system |
+| 2 | `closeQueue()` | Close an active queue |
+| 3 | `joinQueue()` | Add a customer to the queue |
+| 4 | `leaveQueue()` | Remove a customer from the queue |
+| 5 | `callNextCustomer()` | Advance to the next waiting customer |
+| 6 | `calculateWaitTime()` | Compute estimated wait time |
+| 7 | `sendNotification()` | Send a push notification to a customer |
+| 8 | `generateStatistics()` | Produce analytics reports |
 
 ---
 
