@@ -55,6 +55,7 @@ export default function App() {
           <QueueDetailView
             key={selectedQueueId}
             queueId={selectedQueueId}
+            initialQueue={queues.find(q => q.id === selectedQueueId) ?? null}
             onBack={() => setView('dashboard')}
           />
         )}

@@ -7,15 +7,16 @@ import WaitTimeTrendChart from '../components/charts/WaitTimeTrendChart'
 
 const STATUS_COLOR = { open: '#10B981', paused: '#F59E0B', closed: '#F43F5E' }
 
-export default function QueueDetailView({ queueId, onBack }) {
-  const [queue, setQueue] = useState(null)
-  const [waitingList, setWaitingList] = useState([])
+export default function QueueDetailView({ queueId, onBack, initialQueue = null }) {
+  // initialQueue comes from the dashboard's already-fetched list — renders instantly
+  const [queue, setQueue] = useState(initialQueue)
+  const [waitingList, setWaitingList] = useState(null)  // null = first fetch pending
   const [calling, setCalling] = useState(false)
   const [search, setSearch] = useState('')
   const [confirmClose, setConfirmClose] = useState(false)
-  const [callMessage, setCallMessage] = useState(null)   // { type: 'success'|'error', text }
-  const [statusError, setStatusError] = useState(null)   // string
-  const [hourlyData, setHourlyData] = useState(null)
+  const [callMessage, setCallMessage] = useState(null)  // { type: 'success'|'error', text }
+  const [statusError, setStatusError] = useState(null)  // string
+  const [hourlyData, setHourlyData] = useState(null)    // null = first fetch pending
 
   const fetchAll = useCallback(async () => {
     try {
@@ -29,7 +30,9 @@ export default function QueueDetailView({ queueId, onBack }) {
       setHourlyData(hRes.data)
     } catch (e) {
       console.error(e.response?.data?.detail?.message ?? e.message)
+      // On error keep stale data; only initialise to empty on true first-load failure
       setHourlyData(prev => prev ?? [])
+      setWaitingList(prev => prev ?? [])
     }
   }, [queueId])
 
@@ -68,7 +71,7 @@ export default function QueueDetailView({ queueId, onBack }) {
   }
 
   function exportCSV() {
-    if (!waitingList.length) return
+    if (!waitingList?.length) return
     const rows = [['Position', 'Ticket', 'Customer', 'Waited (s)'], ...waitingList.map(t => [t.position + 1, t.ticket_number, t.customer_name, t.waited_seconds])]
     const csv = rows.map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -84,7 +87,7 @@ export default function QueueDetailView({ queueId, onBack }) {
     return Number.isInteger(m) ? `${m} min` : `${m.toFixed(1)} min`
   }
 
-  const filtered = waitingList.filter(t =>
+  const filtered = (waitingList ?? []).filter(t =>
     t.customer_name.toLowerCase().includes(search.toLowerCase()) ||
     String(t.ticket_number).includes(search)
   )
@@ -146,26 +149,53 @@ export default function QueueDetailView({ queueId, onBack }) {
         </div>
       )}
 
-      {/* KPI row */}
-      {queue && (
+      {/* KPI row — renders immediately from initialQueue; shows skeleton if no prior data */}
+      {queue ? (
         <div className="kpi-grid kpi-grid-4">
           <KPICard icon="👥" label="Now Waiting" value={queue.waiting_count} color="cyan" />
           <KPICard icon="🎫" label="Now Serving" value={`#${queue.now_serving}`} color="indigo" />
           <KPICard icon="⏱" label="Avg Service Time" value={fmtWait(queue.average_service_time_seconds)} color="amber" />
-          <KPICard icon="📋" label="In Waiting List" value={waitingList.length} color="violet" />
+          <KPICard icon="📋" label="In Waiting List" value={waitingList?.length ?? queue.waiting_count} color="violet" />
+        </div>
+      ) : (
+        <div className="kpi-grid kpi-grid-4">
+          {[0, 1, 2, 3].map(i => <div key={i} className="kpi-card skeleton-block" style={{ minHeight: 88 }} />)}
         </div>
       )}
 
-      {/* Charts */}
+      {/* Charts — pulse skeleton until first data arrives; previous data kept on re-polls */}
       <div className="charts-row">
-        <WaitingTrendChart data={hourlyData ?? []} />
-        <WaitTimeTrendChart data={hourlyData ?? []} />
+        {hourlyData === null ? (
+          <>
+            <div className="panel chart-panel">
+              <div className="panel-header">
+                <span className="panel-title">Waiting Customers Trend</span>
+                <span className="chart-sub">Today by hour</span>
+              </div>
+              <div className="skeleton-block skeleton-chart-area" />
+            </div>
+            <div className="panel chart-panel">
+              <div className="panel-header">
+                <span className="panel-title">Avg Wait Time Trend</span>
+                <span className="chart-sub">Minutes by hour</span>
+              </div>
+              <div className="skeleton-block skeleton-chart-area" />
+            </div>
+          </>
+        ) : (
+          <>
+            <WaitingTrendChart data={hourlyData} />
+            <WaitTimeTrendChart data={hourlyData} />
+          </>
+        )}
       </div>
 
-      {/* Waiting list */}
+      {/* Waiting list — skeleton rows until first data arrives */}
       <div className="panel">
         <div className="panel-header">
-          <span className="panel-title">Waiting List ({waitingList.length})</span>
+          <span className="panel-title">
+            Waiting List ({waitingList === null ? '…' : waitingList.length})
+          </span>
           <input
             className="table-search"
             placeholder="Search by name or ticket…"
@@ -174,8 +204,31 @@ export default function QueueDetailView({ queueId, onBack }) {
           />
         </div>
         <div className="table-wrap">
-          {filtered.length === 0 ? (
-            <div className="td-empty">{waitingList.length === 0 ? 'No customers waiting' : 'No results match your search'}</div>
+          {waitingList === null ? (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '25%' }}>Position</th>
+                  <th style={{ width: '25%' }}>Ticket</th>
+                  <th style={{ width: '25%' }}>Customer</th>
+                  <th style={{ width: '25%' }}>Est. Remaining</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[0, 1, 2, 3].map(i => (
+                  <tr key={i} className="skeleton-row">
+                    <td><div className="skeleton-cell" style={{ width: 24 }} /></td>
+                    <td><div className="skeleton-cell" style={{ width: 52 }} /></td>
+                    <td><div className="skeleton-cell" style={{ width: `${55 + i * 12}%` }} /></td>
+                    <td><div className="skeleton-cell" style={{ width: 64 }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : filtered.length === 0 ? (
+            <div className="td-empty">
+              {waitingList.length === 0 ? 'No customers waiting' : 'No results match your search'}
+            </div>
           ) : (
             <table className="data-table">
               <thead>
