@@ -50,15 +50,17 @@ async def analytics_summary(db=Depends(get_db)):
 @router.get("/queues/{queue_id}/analytics/hourly")
 async def queue_hourly_analytics(queue_id: str, db=Depends(get_db)):
     now = datetime.now(timezone.utc)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    # Rolling 24-hour window: always shows recent activity regardless of midnight
+    # boundary, and never resets when the first ticket of the day is added.
+    window_start = now - timedelta(hours=24)
     tickets = await db.tickets.find({
         "queue_id": queue_id,
-        "joined_at": {"$gte": today_start},
+        "joined_at": {"$gte": window_start},
     }).to_list(length=None)
 
-    # Fall back to the last 7 days if there is no data for today
-    # (covers demo / seeded data that was inserted on a previous calendar day)
+    # Extend to 7 days when there is genuinely no recent data (fresh seed on an
+    # idle queue, or a queue with very low traffic).
     if not tickets:
         window_start = now - timedelta(days=7)
         tickets = await db.tickets.find({

@@ -225,6 +225,22 @@ def _build_tickets(cfg: dict, queue_id: str, now: datetime, today_start: datetim
     return tickets, now_serving, ticket_number, n_served
 
 
+async def fix_service_times(db) -> None:
+    """
+    Correct average_service_time_seconds for any queue whose stored value
+    doesn't match the seed config (handles stale data from old sessions).
+    Runs on every startup — safe because it only touches known queue names.
+    """
+    expected = {cfg["name"]: cfg["avg_service"] for cfg in _QUEUES}
+    async for q in db.queues.find({"name": {"$in": list(expected)}}):
+        want = expected[q["name"]]
+        if q.get("average_service_time_seconds") != want:
+            await db.queues.update_one(
+                {"_id": q["_id"]},
+                {"$set": {"average_service_time_seconds": want}},
+            )
+
+
 async def seed_demo_data(db) -> None:
     if await db.queues.count_documents({}) > 0:
         return

@@ -3,14 +3,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import connect, disconnect, get_db, init_indexes
 from app.routers import queues, admin, analytics
-from app.seed import seed_demo_data
+from app.seed import seed_demo_data, fix_service_times
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect()
     await init_indexes()
-    await seed_demo_data(get_db())
+    db = get_db()
+    await seed_demo_data(db)
+    await fix_service_times(db)
     yield
     await disconnect()
 

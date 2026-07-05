@@ -98,8 +98,12 @@ class MyTicketFragment : Fragment() {
     }
 
     private fun formatWait(seconds: Int): String {
+        if (seconds <= 0) return "0 sec"
         if (seconds < 60) return "$seconds sec"
-        val m = seconds / 60.0
-        return if (m == kotlin.math.floor(m)) "${m.toInt()} min" else String.format("%.1f min", m)
+        val totalMin = (seconds + 30) / 60
+        if (totalMin < 60) return "$totalMin min"
+        val h = totalMin / 60
+        val m = totalMin % 60
+        return if (m == 0) "$h hr" else "$h hr $m min"
     }
 }
