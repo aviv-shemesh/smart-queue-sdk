@@ -148,10 +148,18 @@ def _build_tickets(cfg: dict, queue_id: str, now: datetime, today_start: datetim
         svc_sec   = _vary(avg, 0.2)
         served_at = called_at + timedelta(seconds=svc_sec)
 
-        # Clamp: served_at must be in the past
+        # Clamp: served_at must be in the past.
+        # IMPORTANT: also re-anchor joined_at from the new called_at so that
+        # called_at − joined_at stays within [min_wait, max_wait].  Without
+        # this, joined_at is left at UTC midnight while called_at is near-now,
+        # producing artificially huge wait times in the analytics KPIs.
         if served_at >= now:
             served_at = now - timedelta(minutes=random.randint(2, 12))
             called_at = served_at - timedelta(seconds=_vary(avg, 0.15))
+            joined_at = max(
+                called_at - timedelta(seconds=random.randint(min_wait, max_wait)),
+                today_start + timedelta(minutes=2),
+            )
 
         tickets.append({
             "queue_id":      queue_id,
@@ -223,6 +231,27 @@ def _build_tickets(cfg: dict, queue_id: str, now: datetime, today_start: datetim
         })
 
     return tickets, now_serving, ticket_number, n_served
+
+
+async def fix_ticket_counters(db) -> None:
+    """
+    Ensure every queue's next_ticket_number is >= the highest ticket_number
+    ever issued for that queue. Repairs counters corrupted by a previous bug
+    that reset the counter downward, causing duplicate ticket numbers.
+    Safe to run on every startup — only increases counters, never decreases.
+    """
+    async for q in db.queues.find({}):
+        qid = q["_id"]
+        agg = await db.tickets.aggregate([
+            {"$match": {"queue_id": qid}},
+            {"$group": {"_id": None, "max_num": {"$max": "$ticket_number"}}},
+        ]).to_list(1)
+        max_ever = agg[0]["max_num"] if agg else 0
+        if q.get("next_ticket_number", 0) < max_ever:
+            await db.queues.update_one(
+                {"_id": qid},
+                {"$set": {"next_ticket_number": max_ever}},
+            )
 
 
 async def fix_service_times(db) -> None:

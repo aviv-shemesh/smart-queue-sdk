@@ -74,6 +74,16 @@ async def increment_ticket_counter(db, queue_id: str) -> int:
     return result["next_ticket_number"]
 
 
+async def sync_counter_after_cancel(db, queue_id: str, cancelled_number: int) -> None:
+    # If the cancelled ticket was the last one ever issued (counter == cancelled_number),
+    # decrement the counter so the next joiner reclaims that slot instead of skipping it.
+    # The equality filter makes this atomic: it only fires when no newer ticket exists.
+    await db.queues.update_one(
+        {"_id": queue_id, "next_ticket_number": cancelled_number},
+        {"$inc": {"next_ticket_number": -1}},
+    )
+
+
 async def update_now_serving(db, queue_id: str, ticket_number: int) -> None:
     await db.queues.update_one(
         {"_id": queue_id},

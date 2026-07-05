@@ -65,9 +65,13 @@ object SmartQueueSDK {
         while (true) {
             val result = fetchMyTicket(queueId)
             emit(result)
-            if (result is SmartQueueResult.Success &&
-                result.data.status in listOf("served", "cancelled")) {
-                break
+            when {
+                result is SmartQueueResult.Success &&
+                    result.data.status in listOf("served", "cancelled") -> break
+                // Ticket no longer exists in the queue (was cancelled externally
+                // or the queue was reset). Stop polling — caller handles navigation.
+                result is SmartQueueResult.Error &&
+                    result.code == "NO_ACTIVE_TICKET" -> break
             }
             delay(intervalSeconds * 1000L)
         }

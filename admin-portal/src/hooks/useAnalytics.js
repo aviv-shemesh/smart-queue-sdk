@@ -8,7 +8,7 @@ function bell(h, peak, width = 2) {
 export function generateHourlyData() {
   const now = new Date().getHours()
   const rows = []
-  for (let h = 7; h <= Math.min(now, 21); h++) {
+  for (let h = 8; h <= Math.min(now, 21); h++) {
     const load = bell(h, 11) + bell(h, 15) * 0.85
     const noise = () => (Math.random() - 0.5) * 3
     rows.push({

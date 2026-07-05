@@ -50,6 +50,13 @@ async def get_ticket_by_id(db, ticket_id: str) -> dict | None:
     return _to_dict(doc) if doc else None
 
 
+async def update_customer_name(db, ticket_id: str, customer_name: str) -> None:
+    await db.tickets.update_one(
+        {"_id": ObjectId(ticket_id)},
+        {"$set": {"customer_name": customer_name}},
+    )
+
+
 async def cancel_ticket(db, ticket_id: str) -> None:
     await db.tickets.update_one(
         {"_id": ObjectId(ticket_id)},

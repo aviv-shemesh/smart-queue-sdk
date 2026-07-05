@@ -1,7 +1,10 @@
+import logging
 from datetime import datetime, timezone
 from fastapi import HTTPException
 from app.repositories import queue_repo, ticket_repo
 from app.models.ticket import TicketResponse, CallNextResponse, WaitingTicketSummary
+
+logger = logging.getLogger(__name__)
 
 
 async def _build_ticket_response(db, ticket: dict, queue: dict) -> TicketResponse:
@@ -28,14 +31,34 @@ async def join_queue(db, queue_id: str, customer_id: str, customer_name: str) ->
             status_code=409,
             detail={"error": "QUEUE_CLOSED", "message": "This queue is not accepting new tickets."},
         )
+
     existing = await ticket_repo.get_active_ticket(db, queue_id, customer_id)
     if existing:
-        raise HTTPException(
-            status_code=409,
-            detail={"error": "ALREADY_IN_QUEUE", "message": "You already have an active ticket in this queue."},
+        # Idempotent join: the same device (customer_id) already has an active
+        # ticket.  Update the display name to whatever was typed (handles
+        # re-joins after app restarts and demo testing with different names on
+        # the same device) and return the existing ticket as a normal success.
+        old_name = existing.get("customer_name", "")
+        if old_name != customer_name:
+            await ticket_repo.update_customer_name(db, existing["id"], customer_name)
+            existing["customer_name"] = customer_name
+        logger.info(
+            "JOIN (idempotent): queue=%s customer_id=%s ticket_number=%d "
+            "previous_name=%r new_name=%r ticket_id=%s",
+            queue_id, customer_id, existing["ticket_number"],
+            old_name, customer_name, existing["id"],
         )
+        return await _build_ticket_response(db, existing, queue)
+
+    prev_counter = queue.get("next_ticket_number", 0)
     ticket_number = await queue_repo.increment_ticket_counter(db, queue_id)
     ticket = await ticket_repo.create_ticket(db, queue_id, customer_id, customer_name, ticket_number)
+    logger.info(
+        "JOIN (new): queue=%s customer_id=%s customer_name=%r "
+        "prev_counter=%d ticket_number=%d ticket_id=%s",
+        queue_id, customer_id, customer_name,
+        prev_counter, ticket_number, ticket["id"],
+    )
     return await _build_ticket_response(db, ticket, queue)
 
 
@@ -47,6 +70,12 @@ async def leave_queue(db, queue_id: str, customer_id: str) -> None:
             detail={"error": "NO_ACTIVE_TICKET", "message": "No active ticket found for this customer."},
         )
     await ticket_repo.cancel_ticket(db, ticket["id"])
+    # Reclaim the slot if this was the last issued ticket — prevents a trailing gap
+    # when the most-recently-joined customer leaves before anyone new joins.
+    # Only for waiting tickets; a called ticket is already "serving" and its slot
+    # should not be reused.
+    if ticket["status"] == "waiting":
+        await queue_repo.sync_counter_after_cancel(db, queue_id, ticket["ticket_number"])
 
 
 async def get_my_ticket(db, queue_id: str, customer_id: str) -> TicketResponse:

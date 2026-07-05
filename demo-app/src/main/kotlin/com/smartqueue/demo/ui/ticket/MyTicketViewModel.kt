@@ -23,9 +23,17 @@ class MyTicketViewModel : ViewModel() {
         pollingJob = viewModelScope.launch {
             SmartQueueSDK.observePosition(queueId).collect { result ->
                 ticketState.postValue(result)
-                if (result is SmartQueueResult.Success && result.data.status == "called") {
-                    navigateToYourTurn.postValue(result.data.ticketNumber)
-                    pollingJob?.cancel()
+                when {
+                    result is SmartQueueResult.Success && result.data.status == "called" -> {
+                        navigateToYourTurn.postValue(result.data.ticketNumber)
+                        pollingJob?.cancel()
+                    }
+                    // Ticket was cancelled externally (queue reset, counter repair, etc.)
+                    // — go back to the home screen automatically.
+                    result is SmartQueueResult.Error && result.code == "NO_ACTIVE_TICKET" -> {
+                        pollingJob?.cancel()
+                        navigateBack.postValue(true)
+                    }
                 }
             }
         }
