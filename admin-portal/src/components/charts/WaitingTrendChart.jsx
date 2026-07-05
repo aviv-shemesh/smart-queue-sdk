@@ -1,11 +1,11 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 
-export default function WaitingTrendChart({ data }) {
+export default function WaitingTrendChart({ data, subtitle = 'Today by hour' }) {
   return (
     <div className="panel chart-panel">
       <div className="panel-header">
         <span className="panel-title">Waiting Customers Trend</span>
-        <span className="chart-sub">Today by hour</span>
+        <span className="chart-sub">{subtitle}</span>
       </div>
       {!data || data.length === 0 ? (
         <div className="chart-empty">No data yet</div>

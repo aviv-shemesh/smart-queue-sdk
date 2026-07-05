@@ -160,22 +160,22 @@ export default function QueueDetailView({ queueId, onBack, initialQueue = null }
             <div className="panel chart-panel">
               <div className="panel-header">
                 <span className="panel-title">Waiting Customers Trend</span>
-                <span className="chart-sub">Today by hour</span>
+                <span className="chart-sub">Last 7 days by hour</span>
               </div>
               <div className="skeleton-block skeleton-chart-area" />
             </div>
             <div className="panel chart-panel">
               <div className="panel-header">
                 <span className="panel-title">Avg Wait Time Trend</span>
-                <span className="chart-sub">Minutes by hour</span>
+                <span className="chart-sub">Last 7 days by hour</span>
               </div>
               <div className="skeleton-block skeleton-chart-area" />
             </div>
           </>
         ) : (
           <>
-            <WaitingTrendChart data={hourlyData} />
-            <WaitTimeTrendChart data={hourlyData} />
+            <WaitingTrendChart data={hourlyData} subtitle="Last 7 days by hour" />
+            <WaitTimeTrendChart data={hourlyData} subtitle="Last 7 days by hour" />
           </>
         )}
       </div>

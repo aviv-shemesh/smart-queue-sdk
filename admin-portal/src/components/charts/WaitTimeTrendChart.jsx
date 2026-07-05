@@ -1,12 +1,12 @@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { fmtMins } from '../../utils/formatTime'
 
-export default function WaitTimeTrendChart({ data }) {
+export default function WaitTimeTrendChart({ data, subtitle = 'Minutes by hour' }) {
   return (
     <div className="panel chart-panel">
       <div className="panel-header">
         <span className="panel-title">Avg Wait Time Trend</span>
-        <span className="chart-sub">Minutes by hour</span>
+        <span className="chart-sub">{subtitle}</span>
       </div>
       {!data || data.length === 0 ? (
         <div className="chart-empty">No data yet</div>

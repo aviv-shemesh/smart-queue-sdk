@@ -51,22 +51,17 @@ async def analytics_summary(db=Depends(get_db)):
 async def queue_hourly_analytics(queue_id: str, db=Depends(get_db)):
     now = datetime.now(timezone.utc)
 
-    # Rolling 24-hour window: always shows recent activity regardless of midnight
-    # boundary, and never resets when the first ticket of the day is added.
-    window_start = now - timedelta(hours=24)
+    # Fixed 7-day window — never conditional. A conditional fallback was the
+    # root cause of chart resets: switching from a larger window (7 days) to a
+    # smaller one (24 h / today) the moment the first new ticket arrived caused
+    # the dataset to shrink, collapsing the chart to a single point.
+    # With a constant window, every join/leave/call-next only adds to existing
+    # hour buckets; it can never remove them.
+    window_start = now - timedelta(days=7)
     tickets = await db.tickets.find({
         "queue_id": queue_id,
         "joined_at": {"$gte": window_start},
     }).to_list(length=None)
-
-    # Extend to 7 days when there is genuinely no recent data (fresh seed on an
-    # idle queue, or a queue with very low traffic).
-    if not tickets:
-        window_start = now - timedelta(days=7)
-        tickets = await db.tickets.find({
-            "queue_id": queue_id,
-            "joined_at": {"$gte": window_start},
-        }).to_list(length=None)
 
     if not tickets:
         return []
