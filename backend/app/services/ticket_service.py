@@ -73,12 +73,19 @@ async def call_next(db, queue_id: str) -> CallNextResponse:
             detail={"error": "QUEUE_NOT_FOUND", "message": "Queue not found."},
         )
 
-    # Mark the previously called ticket as served and update the rolling average
+    # Mark the previously called ticket as served and update the rolling average.
+    # Guard: only include the duration when it falls within a plausible range.
+    # Seed data creates a "called" ticket whose called_at is from server-startup
+    # time; pressing Call Next hours (or days) later would feed an enormous
+    # duration into the average and permanently corrupt it.  Any duration longer
+    # than 5× the current average, or more than 1 hour, is treated as a stale
+    # artefact and skipped — the ticket is still marked served.
     current_called = await ticket_repo.get_currently_called_ticket(db, queue_id)
     if current_called and current_called.get("called_at"):
         await ticket_repo.mark_ticket_served(db, current_called["id"])
         duration = int((datetime.now(timezone.utc) - current_called["called_at"]).total_seconds())
-        if duration > 0:
+        max_plausible = max(queue["average_service_time_seconds"] * 5, 3600)
+        if 0 < duration <= max_plausible:
             await queue_repo.update_rolling_average(db, queue_id, duration)
 
     # Get the next waiting ticket

@@ -229,15 +229,22 @@ async def fix_service_times(db) -> None:
     """
     Correct average_service_time_seconds for any queue whose stored value
     doesn't match the seed config (handles stale data from old sessions).
+    Also resets served_count to the seed value so the rolling-average
+    formula weights future real samples correctly.
     Runs on every startup — safe because it only touches known queue names.
     """
-    expected = {cfg["name"]: cfg["avg_service"] for cfg in _QUEUES}
-    async for q in db.queues.find({"name": {"$in": list(expected)}}):
-        want = expected[q["name"]]
-        if q.get("average_service_time_seconds") != want:
+    expected_avg   = {cfg["name"]: cfg["avg_service"] for cfg in _QUEUES}
+    expected_served = {cfg["name"]: cfg["served"]      for cfg in _QUEUES}
+    async for q in db.queues.find({"name": {"$in": list(expected_avg)}}):
+        want_avg    = expected_avg[q["name"]]
+        want_served = expected_served[q["name"]]
+        if q.get("average_service_time_seconds") != want_avg:
             await db.queues.update_one(
                 {"_id": q["_id"]},
-                {"$set": {"average_service_time_seconds": want}},
+                {"$set": {
+                    "average_service_time_seconds": want_avg,
+                    "served_count": want_served,
+                }},
             )
 
 
