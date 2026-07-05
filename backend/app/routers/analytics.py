@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends
 from app.database import get_db
@@ -56,6 +56,15 @@ async def queue_hourly_analytics(queue_id: str, db=Depends(get_db)):
         "queue_id": queue_id,
         "joined_at": {"$gte": today_start},
     }).to_list(length=None)
+
+    # Fall back to the last 7 days if there is no data for today
+    # (covers demo / seeded data that was inserted on a previous calendar day)
+    if not tickets:
+        window_start = now - timedelta(days=7)
+        tickets = await db.tickets.find({
+            "queue_id": queue_id,
+            "joined_at": {"$gte": window_start},
+        }).to_list(length=None)
 
     if not tickets:
         return []
