@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import api from '../api/client'
+import { fmtSecs } from '../utils/formatTime'
 
 const STATUS_COLOR = { open: '#10B981', paused: '#F59E0B', closed: '#F43F5E' }
 
@@ -31,12 +32,6 @@ export default function QueueTable({ queues, onManage, onRefresh }) {
         {label} {active ? (sort.dir === 1 ? '↑' : '↓') : '↕'}
       </th>
     )
-  }
-
-  function fmtTime(secs) {
-    if (!secs) return '—'
-    const m = Math.floor(secs / 60)
-    return m < 1 ? '< 1 min' : `${m} min`
   }
 
   function copyId(id) {
@@ -116,8 +111,8 @@ export default function QueueTable({ queues, onManage, onRefresh }) {
                 </td>
                 <td className="td-num">{q.waiting_count}</td>
                 <td className="td-num">#{q.now_serving}</td>
-                <td>{fmtTime(q.average_service_time_seconds)}</td>
-                <td>{fmtTime(q.waiting_count * q.average_service_time_seconds)}</td>
+                <td>{fmtSecs(q.average_service_time_seconds)}</td>
+                <td>{fmtSecs(q.waiting_count * q.average_service_time_seconds)}</td>
                 <td>
                   <div className="td-actions">
                     <button className="btn-table-action" onClick={() => onManage(q.id)}>Manage →</button>

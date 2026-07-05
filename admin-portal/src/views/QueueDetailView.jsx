@@ -4,6 +4,7 @@ import { usePolling } from '../hooks/usePolling'
 import KPICard from '../components/KPICard'
 import WaitingTrendChart from '../components/charts/WaitingTrendChart'
 import WaitTimeTrendChart from '../components/charts/WaitTimeTrendChart'
+import { fmtSecs } from '../utils/formatTime'
 
 const STATUS_COLOR = { open: '#10B981', paused: '#F59E0B', closed: '#F43F5E' }
 
@@ -81,12 +82,6 @@ export default function QueueDetailView({ queueId, onBack, initialQueue = null }
     a.click()
   }
 
-  function fmtWait(secs) {
-    if (secs < 60) return `${secs} sec`
-    const m = secs / 60
-    return Number.isInteger(m) ? `${m} min` : `${m.toFixed(1)} min`
-  }
-
   const filtered = (waitingList ?? []).filter(t =>
     t.customer_name.toLowerCase().includes(search.toLowerCase()) ||
     String(t.ticket_number).includes(search)
@@ -154,7 +149,7 @@ export default function QueueDetailView({ queueId, onBack, initialQueue = null }
         <div className="kpi-grid kpi-grid-4">
           <KPICard icon="👥" label="Now Waiting" value={queue.waiting_count} color="cyan" />
           <KPICard icon="🎫" label="Now Serving" value={`#${queue.now_serving}`} color="indigo" />
-          <KPICard icon="⏱" label="Avg Service Time" value={fmtWait(queue.average_service_time_seconds)} color="amber" />
+          <KPICard icon="⏱" label="Avg Service Time" value={fmtSecs(queue.average_service_time_seconds)} color="amber" />
           <KPICard icon="📋" label="In Waiting List" value={waitingList?.length ?? queue.waiting_count} color="violet" />
         </div>
       ) : (
@@ -247,7 +242,7 @@ export default function QueueDetailView({ queueId, onBack, initialQueue = null }
                       <span className="ticket-badge">#{t.ticket_number}</span>
                     </td>
                     <td className="td-name">{t.customer_name}</td>
-                    <td>{queue ? fmtWait(Math.max(0, t.position * queue.average_service_time_seconds)) : '—'}</td>
+                    <td>{queue ? fmtSecs(Math.max(0, t.position * queue.average_service_time_seconds)) : '—'}</td>
                   </tr>
                 ))}
               </tbody>

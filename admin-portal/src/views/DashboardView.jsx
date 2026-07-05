@@ -12,6 +12,7 @@ import ServedTrendChart from '../components/charts/ServedTrendChart'
 import QueueDistributionChart from '../components/charts/QueueDistributionChart'
 import QueueComparisonChart from '../components/charts/QueueComparisonChart'
 import CreateQueueModal from '../components/CreateQueueModal'
+import { fmtSecs, fmtMins } from '../utils/formatTime'
 
 export default function DashboardView({ onManage }) {
   const [queues, setQueues] = useState([])
@@ -30,12 +31,6 @@ export default function DashboardView({ onManage }) {
 
   const { hourly, kpis } = useAnalytics(queues)
 
-  function fmtSecs(s) {
-    if (!s) return '—'
-    const m = Math.floor(s / 60)
-    return m < 1 ? '< 1 min' : `${m} min`
-  }
-
   return (
     <div className="main-content">
       <div className="page-header">
@@ -51,8 +46,8 @@ export default function DashboardView({ onManage }) {
         <KPICard icon="⚡" label="Active Queues" value={kpis.activeQueues} color="cyan" />
         <KPICard icon="👥" label="Total Waiting" value={kpis.totalWaiting} color="indigo" sub={`across ${queues.length} queue${queues.length !== 1 ? 's' : ''}`} />
         <KPICard icon="✅" label="Served Today" value={kpis.servedToday} color="emerald" />
-        <KPICard icon="⏱" label="Avg Wait Time" value={kpis.avgWaitTime} unit=" min" color="amber" />
-        <KPICard icon="🔺" label="Peak Wait Today" value={kpis.peakWait} unit=" min" color="rose" />
+        <KPICard icon="⏱" label="Avg Wait Time" value={fmtMins(kpis.avgWaitTime)} color="amber" />
+        <KPICard icon="🔺" label="Peak Wait Today" value={fmtMins(kpis.peakWait)} color="rose" />
         <KPICard icon="🔧" label="Avg Service" value={fmtSecs(kpis.avgServiceTime)} color="violet" />
         <KPICard icon="🚪" label="Abandonment Rate" value={kpis.abandonmentRate} unit="%" color="rose" />
       </div>
