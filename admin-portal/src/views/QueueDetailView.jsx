@@ -5,6 +5,7 @@ import KPICard from '../components/KPICard'
 import WaitingTrendChart from '../components/charts/WaitingTrendChart'
 import WaitTimeTrendChart from '../components/charts/WaitTimeTrendChart'
 import { fmtSecs } from '../utils/formatTime'
+import { exportReport } from '../utils/exportReport'
 
 const STATUS_COLOR = { open: '#10B981', paused: '#F59E0B', closed: '#F43F5E' }
 
@@ -71,15 +72,9 @@ export default function QueueDetailView({ queueId, onBack, initialQueue = null }
     }
   }
 
-  function exportCSV() {
-    if (!waitingList?.length) return
-    const rows = [['Position', 'Ticket', 'Customer', 'Waited (s)'], ...waitingList.map(t => [t.position + 1, t.ticket_number, t.customer_name, t.waited_seconds])]
-    const csv = rows.map(r => r.join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `queue-${queueId}.csv`
-    a.click()
+  function handleExportReport() {
+    if (!queue || !waitingList?.length) return
+    exportReport(queue, waitingList)
   }
 
   const filtered = (waitingList ?? []).filter(t =>
@@ -115,7 +110,7 @@ export default function QueueDetailView({ queueId, onBack, initialQueue = null }
             onClick={() => setConfirmClose(true)}
             disabled={queue?.status === 'closed'}
           >Close</button>
-          <button className="btn-status" onClick={exportCSV}>Export CSV</button>
+          <button className="btn-status" onClick={handleExportReport}>Export Report</button>
         </div>
       </div>
 
