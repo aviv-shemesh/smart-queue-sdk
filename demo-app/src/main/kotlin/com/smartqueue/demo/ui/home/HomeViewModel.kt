@@ -31,7 +31,12 @@ class HomeViewModel : ViewModel() {
                     navigateToTicket.value = JoinResult(queueId, customerName.trim())
                 }
                 is SmartQueueResult.Error -> {
-                    error.value = result.message
+                    if (result.code == "ALREADY_IN_QUEUE") {
+                        // Active ticket exists from a previous session — go straight to it.
+                        navigateToTicket.value = JoinResult(queueId, customerName.trim())
+                    } else {
+                        error.value = result.message
+                    }
                 }
             }
         }
