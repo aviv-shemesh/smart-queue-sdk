@@ -2,6 +2,14 @@
 
 A complete, production-ready virtual queue management system — Android SDK, FastAPI backend, React admin portal, and Android demo app.
 
+<p align="center">
+  <a href="https://github.com/aviv-shemesh/smart-queue-sdk/blob/main/media/SmartQueueSDK_Promo.mp4">
+    <img src="media/thumbnail.jpg" alt="Smart Queue SDK — Watch the demo" width="720"/>
+  </a>
+  <br/>
+  <sub>▶ Click to watch the demo video</sub>
+</p>
+
 ![Smart Queue](icon.png)
 
 ---
