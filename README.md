@@ -1,9 +1,15 @@
 <div align="center">
 
-## ▶ Watch the Promotional Video
+<img src="icon.png" width="110" alt="Smart Queue SDK"/>
 
-<a href="https://github.com/aviv-shemesh/smart-queue-sdk/blob/main/media/SmartQueueSDK_Promo.mp4">
-  <img src="media/thumbnail.jpg" alt="Smart Queue SDK — Promotional Video" width="820"/>
+<h1>Smart Queue SDK</h1>
+
+<p>Queue Management SDK for Android Applications</p>
+
+<br/>
+
+<a href="https://youtu.be/o0ZcEJqDllA">
+  <img src="https://img.youtube.com/vi/o0ZcEJqDllA/maxresdefault.jpg" alt="Smart Queue SDK — Watch on YouTube" width="820"/>
 </a>
 
 </div>
@@ -13,14 +19,6 @@
 # Smart Queue SDK
 
 A complete, production-ready virtual queue management system — Android SDK, FastAPI backend, React admin portal, and Android demo app.
-
-<p align="center">
-  <a href="https://github.com/aviv-shemesh/smart-queue-sdk/blob/main/media/SmartQueueSDK_Promo.mp4">
-    <img src="media/thumbnail.jpg" alt="Smart Queue SDK — Watch the demo" width="720"/>
-  </a>
-  <br/>
-  <sub>▶ Click to watch the demo video</sub>
-</p>
 
 ![Smart Queue](icon.png)
 
