@@ -44,22 +44,43 @@ export function useAnalytics(queues) {
   const kpis = useMemo(() => {
     const activeQueues = queues.filter(q => q.status !== 'closed').length
     const totalWaiting = queues.reduce((s, q) => s + (q.waiting_count || 0), 0)
-    const avgServiceTime = queues.length
+
+    // 0 means no recorded service time yet — treat as no-data so fmtSecs returns '—'
+    const rawAvgService = queues.length
       ? Math.round(queues.reduce((s, q) => s + q.average_service_time_seconds, 0) / queues.length)
       : 0
+    const avgServiceTime = rawAvgService || null
+
+    // Hourly fallback (generated demo data)
+    const hourlyAvg = hourly.length
+      ? Math.round(hourly.reduce((s, h) => s + h.waitTime, 0) / hourly.length)
+      : null
+    const hourlyPeak = hourly.length ? Math.max(...hourly.map(h => h.waitTime)) : null
+
+    // Use real analytics when > 0; fall back to hourly demo; null renders as '—'
+    const avgWaitTime = analyticsData?.avg_wait_seconds > 0
+      ? Math.round(analyticsData.avg_wait_seconds / 60)
+      : hourlyAvg
+
+    const peakWait = analyticsData?.peak_wait_seconds > 0
+      ? Math.round(analyticsData.peak_wait_seconds / 60)
+      : hourlyPeak
+
+    // 0.0 from the backend means total=0 (no activity) — not a real 0% rate
+    const abandonmentRate = analyticsData == null
+      ? '—'
+      : (analyticsData.served_today > 0 || analyticsData.abandonment_rate_pct > 0)
+        ? analyticsData.abandonment_rate_pct
+        : '—'
 
     return {
       activeQueues,
       totalWaiting,
       avgServiceTime,
       servedToday: analyticsData?.served_today ?? '—',
-      avgWaitTime: analyticsData
-        ? Math.round(analyticsData.avg_wait_seconds / 60)
-        : (hourly.length ? Math.round(hourly.reduce((s, h) => s + h.waitTime, 0) / hourly.length) : 0),
-      peakWait: analyticsData
-        ? Math.round(analyticsData.peak_wait_seconds / 60)
-        : (hourly.length ? Math.max(...hourly.map(h => h.waitTime)) : 0),
-      abandonmentRate: analyticsData?.abandonment_rate_pct ?? '—',
+      avgWaitTime,
+      peakWait,
+      abandonmentRate,
     }
   }, [queues, analyticsData, hourly])
 

@@ -16,7 +16,7 @@ export default function KPICard({ icon, label, value, unit = '', trend, trendUp,
       </div>
       <div className="kpi-body">
         <div className="kpi-value">
-          {value}<span className="kpi-unit">{unit}</span>
+          {value}<span className="kpi-unit">{value === '—' ? '' : unit}</span>
         </div>
         <div className="kpi-label">{label}</div>
         {sub && <div className="kpi-sub">{sub}</div>}
